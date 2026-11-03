@@ -1,0 +1,17 @@
+{
+  "name": "dog-walking-service",
+  "version": "1.0.0",
+  "description": "Dog Walking Service - Digital Floor Staff Static Landing Page & Operations Portal",
+  "type": "module",
+  "main": "js/app.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint js/ tests/"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "jsdom": "^30.1.3",
+    "vitest": "^5.1.0"
+  }
+}

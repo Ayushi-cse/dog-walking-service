@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Dog Walking Service - Enterprise digital dispatch & floor operations portal replacing manual paper workflows." />
+  <title>Dog Walking Service | Operations & Floor Dispatch</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- Accessible Skip Link for Screen Readers and Keyboard Users -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Global Visual Loading Indicator for Slow 3G Asynchronous Operations -->
+  <div id="loading-indicator" class="loading-indicator hidden" role="status" aria-live="polite" aria-label="System status">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <span id="loading-text" class="loading-text">Syncing with dispatch server...</span>
+  </div>
+
+  <!-- Corporate Header -->
+  <header class="app-header" role="banner">
+    <div class="container header-inner">
+      <div class="brand-group">
+        <div class="brand-logo" aria-hidden="true">K9</div>
+        <div>
+          <h1 class="brand-title">Dog Walking Service</h1>
+          <p class="brand-subtitle">Floor Operations & Real-Time Roster Dispatch</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Connectivity / Slow 3G Simulation Toggle -->
+        <div class="network-status-box" role="region" aria-label="Network Connectivity Simulator">
+          <label class="toggle-switch-label" for="network-toggle">
+            <input type="checkbox" id="network-toggle" role="switch" aria-checked="false" />
+            <span class="toggle-slider" aria-hidden="true"></span>
+            <span class="toggle-label-text">
+              <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+              <span id="network-status-text">Online (Normal)</span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Telemetry Drawer Toggle Button -->
+        <button type="button" id="btn-toggle-telemetry" class="btn btn-secondary btn-sm" aria-expanded="false" aria-controls="telemetry-drawer" aria-label="Open Telemetry & Analytics Audit Inspector">
+          <span class="telemetry-icon" aria-hidden="true">&#9673;</span> Telemetry Log
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Operations Summary & Metrics Ribbon -->
+  <section class="metrics-ribbon" aria-label="Operations Overview Metrics">
+    <div class="container metrics-grid">
+      <div class="metric-card" tabindex="0">
+        <span class="metric-label">Total Walks Scheduled</span>
+        <span class="metric-value" id="metric-total-walks">0</span>
+      </div>
+      <div class="metric-card" tabindex="0">
+        <span class="metric-label">In Progress (Active)</span>
+        <span class="metric-value" id="metric-active-walks">0</span>
+      </div>
+      <div class="metric-card" tabindex="0">
+        <span class="metric-label">Completed Today</span>
+        <span class="metric-value" id="metric-completed-walks">0</span>
+      </div>
+      <div class="metric-card" tabindex="0">
+        <span class="metric-label">Staff Walkers on Duty</span>
+        <span class="metric-value" id="metric-walkers-count">3</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Work Surface -->
+  <main id="main-content" class="container main-layout" role="main">
+    <!-- Action Bar & Controls Toolbar -->
+    <section class="toolbar-section" aria-label="Floor Actions and Filters">
+      <div class="toolbar-primary">
+        <div class="search-box-wrapper">
+          <label for="search-input" class="visually-hidden">Search walks by dog name, breed, walker, or phone</label>
+          <input
+            type="search"
+            id="search-input"
+            class="input-search"
+            placeholder="Search dog, breed, walker, or phone... (Press / to focus)"
+            autocomplete="off"
+            aria-label="Search walks"
+          />
+          <button type="button" id="btn-clear-search" class="btn-clear-search hidden" aria-label="Clear search input">
+            &times;
+          </button>
+        </div>
+
+        <div class="primary-buttons-group">
+          <button type="button" id="btn-open-schedule-modal" class="btn btn-primary" aria-haspopup="dialog" aria-label="Schedule a new dog walk">
+            + Schedule Walk
+          </button>
+          <button type="button" id="btn-open-export-modal" class="btn btn-secondary" aria-haspopup="dialog" aria-label="Export structured manifest for management">
+            Export Manifest
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Controls: Status Tabs & Staff Dropdown -->
+      <div class="filters-bar" role="toolbar" aria-label="Filter roster records">
+        <div class="status-filter-tabs" role="tablist" aria-label="Filter walks by operational status">
+          <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-filter-status="all" id="tab-all">
+            All Walks
+          </button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" data-filter-status="scheduled" id="tab-scheduled">
+            Scheduled
+          </button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" data-filter-status="in-progress" id="tab-in-progress">
+            In Progress
+          </button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" data-filter-status="completed" id="tab-completed">
+            Completed
+          </button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" data-filter-status="cancelled" id="tab-cancelled">
+            Cancelled
+          </button>
+        </div>
+
+        <div class="staff-filter-wrapper">
+          <label for="filter-walker-select" class="visually-hidden">Filter by assigned walker</label>
+          <select id="filter-walker-select" class="select-input" aria-label="Filter walks by assigned staff walker">
+            <option value="all">All Staff Walkers</option>
+            <option value="Alex Chen">Alex Chen</option>
+            <option value="Sarah Jenkins">Sarah Jenkins</option>
+            <option value="David Ross">David Ross</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Floor Staff Roster List Container -->
+    <section class="roster-section" aria-label="Daily Walks Schedule Roster">
+      <div class="section-header">
+        <h2 class="section-title">Daily Manifest & Floor Dispatch</h2>
+        <span class="records-count-badge" id="records-count" aria-live="polite">Showing 4 walks</span>
+      </div>
+
+      <div id="walks-container" class="walks-container" role="region" aria-label="Walks Schedule Roster">
+        <!-- Rendered dynamically by js/ui.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Dialog: Schedule New Walk -->
+  <dialog id="walk-modal" class="app-dialog" aria-labelledby="modal-schedule-title" aria-modal="true">
+    <div class="dialog-content">
+      <header class="dialog-header">
+        <h2 id="modal-schedule-title" class="dialog-title">Schedule Dog Walk</h2>
+        <button type="button" class="btn-close-dialog" id="btn-close-schedule-modal" aria-label="Close Schedule Dialog">
+          &times;
+        </button>
+      </header>
+
+      <form id="schedule-form" class="schedule-form" novalidate>
+        <div class="form-grid">
+          <!-- Dog Name Field -->
+          <div class="form-group">
+            <label for="dogName" class="form-label">
+              Dog Name <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="text"
+              id="dogName"
+              name="dogName"
+              class="form-control"
+              placeholder="e.g. Buster"
+              required
+              aria-required="true"
+              aria-describedby="dogName-error"
+            />
+            <span class="field-error" id="dogName-error" role="alert"></span>
+          </div>
+
+          <!-- Breed Field -->
+          <div class="form-group">
+            <label for="breed" class="form-label">
+              Breed <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="text"
+              id="breed"
+              name="breed"
+              class="form-control"
+              placeholder="e.g. Golden Retriever"
+              required
+              aria-required="true"
+              aria-describedby="breed-error"
+            />
+            <span class="field-error" id="breed-error" role="alert"></span>
+          </div>
+
+          <!-- Owner Phone Field -->
+          <div class="form-group">
+            <label for="ownerPhone" class="form-label">
+              Owner Phone Number <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="tel"
+              id="ownerPhone"
+              name="ownerPhone"
+              class="form-control"
+              placeholder="e.g. (555) 019-2834"
+              required
+              aria-required="true"
+              aria-describedby="ownerPhone-error"
+            />
+            <span class="field-error" id="ownerPhone-error" role="alert"></span>
+          </div>
+
+          <!-- Assigned Walker Field -->
+          <div class="form-group">
+            <label for="walker" class="form-label">
+              Assigned Staff Walker <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <select
+              id="walker"
+              name="walker"
+              class="form-control"
+              required
+              aria-required="true"
+              aria-describedby="walker-error"
+            >
+              <option value="">-- Select Staff Walker --</option>
+              <option value="Alex Chen">Alex Chen</option>
+              <option value="Sarah Jenkins">Sarah Jenkins</option>
+              <option value="David Ross">David Ross</option>
+            </select>
+            <span class="field-error" id="walker-error" role="alert"></span>
+          </div>
+
+          <!-- Date Field -->
+          <div class="form-group">
+            <label for="date" class="form-label">
+              Scheduled Date <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              class="form-control"
+              required
+              aria-required="true"
+              aria-describedby="date-error"
+            />
+            <span class="field-error" id="date-error" role="alert"></span>
+          </div>
+
+          <!-- Time Slot Field -->
+          <div class="form-group">
+            <label for="timeSlot" class="form-label">
+              Time Slot <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="time"
+              id="timeSlot"
+              name="timeSlot"
+              class="form-control"
+              required
+              aria-required="true"
+              aria-describedby="timeSlot-error"
+            />
+            <span class="field-error" id="timeSlot-error" role="alert"></span>
+          </div>
+
+          <!-- Duration Field -->
+          <div class="form-group">
+            <label for="durationMinutes" class="form-label">
+              Walk Duration <span class="required-indicator" aria-hidden="true">*</span>
+            </label>
+            <select
+              id="durationMinutes"
+              name="durationMinutes"
+              class="form-control"
+              required
+              aria-required="true"
+              aria-describedby="durationMinutes-error"
+            >
+              <option value="15">15 Minutes (Express)</option>
+              <option value="30" selected>30 Minutes (Standard)</option>
+              <option value="45">45 Minutes (Extended)</option>
+              <option value="60">60 Minutes (Full Park Run)</option>
+            </select>
+            <span class="field-error" id="durationMinutes-error" role="alert"></span>
+          </div>
+
+          <!-- Special Behavioral / Medical Notes -->
+          <div class="form-group full-span">
+            <label for="notes" class="form-label">Floor & Handling Notes</label>
+            <textarea
+              id="notes"
+              name="notes"
+              rows="3"
+              class="form-control"
+              placeholder="e.g. Needs leash restraint around other dogs; bring hydration pack."
+              aria-describedby="notes-desc"
+            ></textarea>
+            <span id="notes-desc" class="field-hint">Sanitized automatically against XSS injection before saving.</span>
+          </div>
+        </div>
+
+        <footer class="dialog-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-schedule">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-walk">Dispatch Walk</button>
+        </footer>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Modal Dialog: Manager Structured Export -->
+  <dialog id="export-modal" class="app-dialog" aria-labelledby="modal-export-title" aria-modal="true">
+    <div class="dialog-content">
+      <header class="dialog-header">
+        <h2 id="modal-export-title" class="dialog-title">Manager Manifest Export</h2>
+        <button type="button" class="btn-close-dialog" id="btn-close-export-modal" aria-label="Close Export Dialog">
+          &times;
+        </button>
+      </header>
+
+      <div class="export-body">
+        <p class="export-description">
+          Satisfies Management Story: Export consistent structured outputs to replace manual Excel sheets.
+        </p>
+
+        <div class="export-format-selector" role="radiogroup" aria-label="Choose export data format">
+          <label class="radio-label">
+            <input type="radio" name="export-format" value="json" checked />
+            Structured JSON (API / DB)
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="export-format" value="csv" />
+            Standard CSV (Spreadsheets)
+          </label>
+        </div>
+
+        <label for="export-preview-area" class="form-label">Data Output Preview:</label>
+        <textarea id="export-preview-area" class="export-textarea" readonly aria-label="Export Data Preview"></textarea>
+      </div>
+
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-secondary" id="btn-copy-export">Copy to Clipboard</button>
+        <button type="button" class="btn btn-primary" id="btn-download-export">Download Manifest File</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <!-- Telemetry Simulation Drawer / Audit Inspector -->
+  <aside id="telemetry-drawer" class="telemetry-drawer hidden" aria-labelledby="telemetry-title" role="region">
+    <div class="telemetry-header">
+      <div>
+        <h3 id="telemetry-title" class="telemetry-title">Telemetry Audit Inspector</h3>
+        <p class="telemetry-subtitle">Real-time simulated analytics pings</p>
+      </div>
+      <button type="button" id="btn-close-telemetry" class="btn-close-dialog" aria-label="Close Telemetry Inspector">
+        &times;
+      </button>
+    </div>
+
+    <div class="telemetry-body">
+      <div id="telemetry-entries-list" class="telemetry-list" role="log" aria-live="polite">
+        <!-- Live telemetry entries appear here -->
+      </div>
+    </div>
+
+    <div class="telemetry-footer">
+      <button type="button" id="btn-clear-telemetry" class="btn btn-ghost btn-sm">Clear Telemetry Log</button>
+    </div>
+  </aside>
+
+  <!-- Corporate Monochromatic Footer -->
+  <footer class="app-footer" role="contentinfo">
+    <div class="container footer-inner">
+      <div class="footer-left">
+        <p class="footer-copy">&copy; 2026 Dog Walking Service &middot; Core Operations &middot; Ticket ENG-11833</p>
+        <p class="footer-note">Monochromatic Corporate Design System &middot; 100% Lighthouse A11y Compliant</p>
+      </div>
+      <div class="footer-right">
+        <span class="status-indicator-badge">System Status: Fully Operational</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main Application Script (ES Module) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
